@@ -2,7 +2,7 @@
 
 機能説明
 ---
-シーリングライトのリモコンの信号をRaspberryi Piでエミュレートし，接続した赤外線LEDを点滅させることでシーリングライトのON/OFFを切り替える．
+シーリングライトのリモコンの信号をRaspberryi Piでエミュレートした．接続した赤外線LEDのパルス出力によるデータ送信でシーリングライトの点灯/消灯の切り替えが可能．
 
 実行環境
 ---
@@ -15,10 +15,10 @@
 
 同じNEC RE0208リモコンを採用している照明であれば操作できるが，その他の製品での動作は保証出来ない．
 
-Raspberry Piのモデルが2または3ならばプログラムをそのまま使用できる．モデル4を使用する場合は`myled.c`のxx行目を以下のように書き換え，GPIOの最初のアドレスを変更する．
+またRaspberry Piのモデルが2または3ならばプログラムをそのまま使用できるが，モデル4を使用する場合は`myled.c`のxx行目を以下のように書き換え，GPIOの最初のアドレスを変更する必要がある．
 
 ```c:myled.c
-gpio_base = ioremap_nocache(0x3f200000, 0xA0); //original:0x3f200000
+gpio_base timedatectl list-timezones= ioremap_nocache(0x3f200000, 0xA0); //original:0x3f200000
 ```
 
 使用方法
@@ -45,9 +45,8 @@ $ sudo insmod myled.ko
 
 ```
 $ tail -n 1 /var/log/kern.log
-Nov 30 14:07:21 ubuntu kernel: [19904.146763] /home/ubuntu/RaspiCeilingLightsController/myled.c is loaded. major:511
 ```
-
+<!--Nov 30 14:07:21 ubuntu kernel: [19904.146763] /home/ubuntu/RaspiCeilingLightsController/myled.c is loaded. major:511-->
 5. ファイル`/dev/myled0`を作成
 
     ※メジャー番号は自分の環境で確認したものを指定
@@ -61,7 +60,7 @@ $ sudo mknod /dev/myled0 c 511 0
 $ sudo chmod 666 /dev/myled0
 ```
 
-7. `/dev/myled`に1を書き込むことでシーリングライトのON/OFFの操作が可能
+7. 赤外線LEDをシーリングライトに向ける．`/dev/myled`に1を書き込むたびにライトが点灯/消灯する．
 
 
 ```
