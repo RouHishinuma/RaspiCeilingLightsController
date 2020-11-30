@@ -7,8 +7,8 @@
 #include <linux/delay.h>
 
 
-MODULE_AUTHOR("Akifumi Takagi");
-MODULE_DESCRIPTION("driver for LED control");
+MODULE_AUTHOR("Ryuichi Ueda and Akifumi Takagi");
+MODULE_DESCRIPTION("driver for IRled control");
 MODULE_LICENSE("GPL");
 MODULE_VERSION("0.0.1");
 
@@ -21,6 +21,7 @@ void T1High(int times);
 void T1Low(int times);
 void Bit1(void);
 void Bit0(void);
+void sendBit(int onebit);
 
 static ssize_t led_write(struct file* filp, const char* buf, size_t count, loff_t* pos)
 {
@@ -28,56 +29,85 @@ static ssize_t led_write(struct file* filp, const char* buf, size_t count, loff_
 	if(copy_from_user(&c,buf,sizeof(char)))
 		return -EFAULT;
 
-	if(c == '1')
+
+	int signal;
+	char flag = 0;
+	switch(c)
 	{
-		T1High(15);
+		case 1 :
+			signal = 0x02FD807F;
+			break;
+		case 2 : 
+			signal = 0x02FD40BF;
+			break;
+		case 3 : 
+			signal = 0x02FDC03F;
+			break;
+		case 4 : 
+			signal = 0x02FD20DF;
+			break;
+		case 5 : 
+			signal = 0x02FDA05F;
+			break;
+		case 6 : 
+			signal = 0x02FD609F;
+			break;
+		case 7 : 
+			signal = 0x02FDE01F;
+			break;
+		case 8 : 
+			signal = 0x02FD10EF;
+			break;
+		case 9 : 
+			signal = 0x02FD906F;
+			break;
+		case 10 : 
+			signal = 0x02FD50AF;
+			break;
+		case 11 : 
+			signal = 0x02FDD02F;
+			break;
+		case 12 : 
+			signal = 0x02FD30CF;
+			break;
+		default :
+			flag = 1;
+			break;
+	}	
+	
+	if(flag == 0)
+	{		
+                T1High(15);
                 T1Low(7);
 
-		//4
-Bit0();
-Bit1();
-Bit0();
-Bit0();
-
-Bit0();
-Bit0();
-Bit0();
-Bit1();
-		//1
-Bit1();
-Bit0();
-Bit1();
-Bit1();
-		//B
-Bit0();
-Bit1();
-Bit1();
-Bit0();
-		//6
-Bit1();
-Bit1();
-Bit0();
-Bit1();
-		//D
-Bit0();
-Bit1();
-Bit0();
-Bit1();
-		//5
-Bit0();
-Bit0();
-Bit1();
-Bit0();
-		//2
-Bit1();
-Bit0();
-Bit1();
-Bit0();
-		//A
-				
-	
-		T1High(1);
+                int shift = 0x1;
+                int onebit;
+                int count;
+                for(count=31;count>=0;count--)
+                {
+                        onebit = signal & (shift<<count);
+                        onebit >>= count;
+                        sendBit(onebit);
+                }
+                T1High(1);
 	}
+		
+	/*if(c == '1')
+	{
+		int signal  = 0x02FDD827;
+		int shift = 0x1;
+		int onebit = 0;
+		int count = 0;
+		T1High(15);
+                T1Low(7);
+		for(count=31;count>=0;count--)
+		{
+			onebit = signal & (shift<<count);
+			onebit >>= count;
+			sendBit(onebit);
+		}
+		T1High(1);
+	}*/
 	//printk(KERN_INFO "receive %c\n",c);
         return 1; 
 }
@@ -185,6 +215,20 @@ void Bit1(void){
 void Bit0(void){
     T1High(1);
     T1Low(1);
+}
+
+void sendBit(int onebit)
+{
+	if(onebit==1)
+	{
+		T1High(1);
+    		T1Low(3);
+	}
+	if(onebit==0)
+	{
+		T1High(1);
+    		T1Low(1);
+	}
 }
 /**************************************/
 
