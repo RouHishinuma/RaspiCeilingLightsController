@@ -6,6 +6,7 @@
 #include <linux/io.h>
 #include <linux/delay.h>
 
+#define TOGGLE_DATA 0x41B6D52A
 
 MODULE_AUTHOR("Ryuichi Ueda and Akifumi Takagi");
 MODULE_DESCRIPTION("driver for IRled control");
@@ -19,8 +20,7 @@ static volatile u32 *gpio_base = NULL;
 
 void T1High(int times);
 void T1Low(int times);
-void Bit1(void);
-void Bit0(void);
+void sendBit(int onebit);
 
 static ssize_t led_write(struct file* filp, const char* buf, size_t count, loff_t* pos)
 {
@@ -33,52 +33,19 @@ static ssize_t led_write(struct file* filp, const char* buf, size_t count, loff_
 		T1High(15);
                 T1Low(7);
 
-		//4
-Bit0();
-Bit1();
-Bit0();
-Bit0();
-
-Bit0();
-Bit0();
-Bit0();
-Bit1();
-		//1
-Bit1();
-Bit0();
-Bit1();
-Bit1();
-		//B
-Bit0();
-Bit1();
-Bit1();
-Bit0();
-		//6
-Bit1();
-Bit1();
-Bit0();
-Bit1();
-		//D
-Bit0();
-Bit1();
-Bit0();
-Bit1();
-		//5
-Bit0();
-Bit0();
-Bit1();
-Bit0();
-		//2
-Bit1();
-Bit0();
-Bit1();
-Bit0();
-		//A
-				
+                int shift = 0x1;
+                int onebit;
+                int i;
+                for(i=31; i>=0; i--)
+                {
+                        onebit = TOGGLE_DATA & (shift << i);
+                        onebit >>= i;
+                        sendBit(onebit);
+                }
 	
 		T1High(1);
 	}
-	//printk(KERN_INFO "receive %c\n",c);
+	printk(KERN_INFO "receive %c\n",c);
         return 1; 
 }
 
@@ -148,7 +115,6 @@ static void __exit cleanup_mod(void)
     	printk(KERN_INFO "%s is unloaded. major:%d\n",__FILE__,MAJOR(dev));
 }
 
-/****************************************/
 void T1High(int times)
 {
 	int j;
@@ -156,7 +122,7 @@ void T1High(int times)
 	{
 		int i;
         	for(i=0; i<23; i++)
-		{ //23
+		{ 
 			gpio_base[7] = 1 << 25;
 			udelay(8);
         		gpio_base[10] = 1 << 25;
@@ -165,28 +131,32 @@ void T1High(int times)
     	}
 }
 
-void T1Low(int times){
-    int j;
-    for(j=0; j<times; j++)
-    { //23
-	int i;
-        for(i=0; i<23; i++)
-	{
-            udelay(26);
+void T1Low(int times)
+{
+	int j;
+    	for(j=0; j<times; j++)
+    	{ 
+		int i;
+        	for(i=0; i<23; i++)
+		{
+                	udelay(26);
+	        }
+	}
+}
+
+void sendBit(int onebit)
+{
+        if(onebit==1)
+        {
+                T1High(1);
+                T1Low(3);
         }
-    }
+        if(onebit==0)
+        {
+                T1High(1);
+                T1Low(1);
+        }
 }
-
-void Bit1(void){
-    T1High(1);
-    T1Low(3);
-}
-
-void Bit0(void){
-    T1High(1);
-    T1Low(1);
-}
-/**************************************/
 
 module_init(init_mod);
 module_exit(cleanup_mod);
