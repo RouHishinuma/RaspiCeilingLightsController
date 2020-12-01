@@ -2,7 +2,7 @@
 
 機能説明
 ---
-シーリングライトのリモコンの信号をRaspberryi Piでエミュレートし，接続した赤外線LEDを点滅させることでシーリングライトのON/OFFを切り替える．
+シーリングライトのリモコンの信号をRaspberryi Piでエミュレートした．接続した赤外線LEDのパルス出力によるデータ送信でシーリングライトの点灯/消灯の切り替えが可能．
 
 実行環境
 ---
@@ -11,22 +11,22 @@
 * 赤外線LED : OSI5LA5113A
 * シーリングライト : NEC HLDZ06013
 
-赤外線LEDは100Ωの抵抗を介してアノード側をRaspberry Piの25ピンに接続する．カソード側はGNDに接続する．
+赤外線LEDのアノード側を100Ωの抵抗を介してRaspberry Piの25ピンに接続する．カソード側はGNDに接続する．
 
-同じNEC RE0208リモコンを採用している照明であれば操作できるが，その他の製品での動作は保証出来ない．
-
-Raspberry Piのモデルが2または3ならばプログラムをそのまま使用できる．モデル4を使用する場合は`myled.c`のxx行目を以下のように書き換え，GPIOの最初のアドレスを変更する．
+Raspberry Pi 4を使用する場合は`myled.c`のxx行目を以下のように書き換える．（Pi 2，3ならば変更しない）
+<!--GPIOの最初のアドレスを変更すること．-->
 
 ```c:myled.c
-gpio_base = ioremap_nocache(0x3f200000, 0xA0); //original:0x3f200000
+gpio_base timedatectl list-timezones= ioremap_nocache(0xfe200000, 0xA0); //original:0x3f200000
 ```
+※本プログラムではNECのリモコンRE0208の動作をエミュレートしているため，それ以外のリモコンを採用している照明では動作の保証は出来ない．
 
 使用方法
 ---
 1. リポジトリをクローンしリポジトリのディレクトリ内へ移動
 ```
 $ git clone https://github.com/karata-sc/RaspiCeilingLightsController.git
-$ cd RaspiTvController
+$ cd RaspiCeilingLightsController
 ```
 
 2. Makefileを実行しカーネルモジュールを作成
@@ -45,9 +45,8 @@ $ sudo insmod myled.ko
 
 ```
 $ tail -n 1 /var/log/kern.log
-Nov 30 14:07:21 ubuntu kernel: [19904.146763] /home/ubuntu/RaspiCeilingLightsController/myled.c is loaded. major:511
 ```
-
+<!--Nov 30 14:07:21 ubuntu kernel: [19904.146763] /home/ubuntu/RaspiCeilingLightsController/myled.c is loaded. major:511-->
 5. ファイル`/dev/myled0`を作成
 
     ※メジャー番号は自分の環境で確認したものを指定
@@ -61,8 +60,7 @@ $ sudo mknod /dev/myled0 c 511 0
 $ sudo chmod 666 /dev/myled0
 ```
 
-7. `/dev/myled`に1を書き込むことでシーリングライトのON/OFFの操作が可能
-
+7. 赤外線LEDをシーリングライトに向ける．`/dev/myled`に1を書き込むたびにライトが交互に点灯/消灯する．
 
 ```
 $ echo 1 > /dev/myled0
