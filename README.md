@@ -8,7 +8,7 @@
 
 実行環境
 ---
-* Raspberry Pi: 3 model B+
+* Raspberry Pi : 3 model B+
 * OS : Ubuntu Server 20.04.1 LTS 64-bit
 * シーリングライト : NEC HLDZ06013
 
