@@ -25,6 +25,10 @@ static void sendBit(int onebit);
 static ssize_t led_write(struct file* filp, const char* buf, size_t count, loff_t* pos)
 {
 	char c;  
+        int mask= 0x1;
+        int onebit;
+        int i;
+
 	if(copy_from_user(&c,buf,sizeof(char)))
 		return -EFAULT;
 
@@ -33,12 +37,9 @@ static ssize_t led_write(struct file* filp, const char* buf, size_t count, loff_
 		T1High(15);
                 T1Low(7);
 
-                int shift = 0x1;
-                int onebit;
-                int i;
                 for(i=31; i>=0; i--)
                 {
-                        onebit = TOGGLE_DATA & (shift << i);
+                        onebit = TOGGLE_DATA & (mask << i);
                         onebit >>= i;
                         sendBit(onebit);
                 }
@@ -71,7 +72,13 @@ static struct file_operations led_fops = {
 
 static int __init init_mod(void)
 {
+	const u32 led = 25;
+	const u32 index = led/10;  // GPFSEL2
+ 	const u32 shift = (led%10)*3;  // 15bit
+    	const u32 mask = ~(0x7 << shift);  // 11111111111111000111111111111111
+
 	int retval;
+
 	retval = alloc_chrdev_region(&dev,0,1,"myled");
 	if(retval<0){
 		printk(KERN_ERR "alloc_chrdev_region failed.\n");
@@ -95,10 +102,6 @@ static int __init init_mod(void)
 	
 	gpio_base = ioremap_nocache(0x3f200000, 0xA0);
 
-	const u32 led = 25;
-	const u32 index = led/10;  // GPFSEL2
- 	const u32 shift = (led%10)*3;  // 15bit
-    	const u32 mask = ~(0x7 << shift);  // 11111111111111000111111111111111
     	gpio_base[index] = (gpio_base[index] & mask) | (0x1 << shift); // 001: output flag
 
     	// 11111111111111001111111111111111
