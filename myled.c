@@ -6,7 +6,7 @@
 #include <linux/io.h>
 #include <linux/delay.h>
 
-#define TOGGLE_DATA 0x41B6D52A
+#define TX_DATA 0x41B6D52A
 
 MODULE_AUTHOR("Ryuichi Ueda and Akifumi Takagi");
 MODULE_DESCRIPTION("driver for IRled control");
@@ -39,7 +39,7 @@ static ssize_t led_write(struct file* filp, const char* buf, size_t count, loff_
 
                 for(i=31; i>=0; i--)
                 {
-                        onebit = TOGGLE_DATA & (mask << i);
+                        onebit = TX_DATA & (mask << i);
                         onebit >>= i;
                         sendBit(onebit);
                 }
