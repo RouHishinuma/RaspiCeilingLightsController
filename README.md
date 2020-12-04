@@ -1,27 +1,49 @@
 # RaspiCeilingLightsController
 
+---
 機能説明
 ---
 遠隔操作でシーリングライトの点灯/消灯を切り替える．
 
+<!--![](https://i.gyazo.com/828a352fb146bf9b585f50d509d5ee94.png)-->
+![](https://i.gyazo.com/49bf35f878a05165b1de8de1678c1f95.gif)
+
 シーリングライトのリモコンが出力する信号と同等の信号をRaspberryi Piに接続した赤外線LEDから出力することで，制御を可能としている．
 
+本プログラムではNECのリモコンRE0208の動作をエミュレートしている．リモコンの点灯/消灯ボタンを押した時に出力されるデータは，Arduinoの赤外線通信ライブラリIRremoteのサンプルプログラムIRrecvDumpV2を使用して解析した．
+
+![](https://i.gyazo.com/0a7ac0286be56f1578b8be70f65a3730.png)
+
+
+解析結果より，RE0208の赤外線通信はNECフォーマットであることがわかった．これより32bitのコードをNECフォーマットのパルス信号に変換し出力するプログラムを作成した．NECフォーマットのプロトコルに関しては，以下のサイトを参考にした．
+* http://elm-chan.org/docs/ir_format.html
+
+IRrecvDumpV2の使用方法についてはこちらのサイトを参考にした．
+* https://asukiaaa.blogspot.com/2018/05/arduino.html
+
+
+---
 実行環境
 ---
 * Raspberry Pi : 3 model B+
 * OS : Ubuntu Server 20.04.1 LTS 64-bit
 * シーリングライト : NEC HLDZ06013
 
-赤外線LED OSI5LA5113Aのアノード側を100Ωの抵抗を介してRaspberry PiのGPIO25ピンに接続する．カソード側はGNDに接続する．
+以下のように，赤外線LED OSI5LA5113Aのアノード側を100Ωの抵抗を介してRaspberry PiのGPIO25ピンに接続する．カソード側はGNDに接続する．
 
-Raspberry Pi 4を使用する場合は`myled.c`の103行目を以下のように書き換える．（Pi 2，3ならば変更しない）
+![](https://i.gyazo.com/0fc99ba1afcfed800ac252b211966620.jpg)
+
+もしRaspberry Pi 4を使用する場合は`myled.c`の103行目を以下のように書き換える．（Pi 2，3ならば変更しない）
 <!--GPIOの最初のアドレスを変更すること．-->
 
 ```c:myled.c
 gpio_base timedatectl list-timezones= ioremap_nocache(0xfe200000, 0xA0); //original:0x3f200000
 ```
-※本プログラムではNECのリモコンRE0208の動作をエミュレートしているため，それ以外のリモコンを採用している照明では動作が保証出来ない．
+また，RE0208で制御されていない機器であっても，同じNECフォーマットであればプログラムを一部書き換えるだけで照明機器に限らず制御可能である．自分で選んだ機器を制御したい場合は，そのリモコンの出力するコードを調べて，`myled.c`の9行目にある`TX_DATA`で定義されている32bitのコードを書き換える．
 
+
+
+---
 使用方法
 ---
 1. リポジトリをクローンしリポジトリのディレクトリ内へ移動
@@ -69,8 +91,32 @@ $ sudo chmod 666 /dev/myled0
 $ echo 1 > /dev/myled0
 ```
 
+
+
+---
+アンインストール
+---
+カーネルモジュールをアンインストールしたい場合は，以下を実行する．
+
+`$ sudo rmmod myled`
+
+ディレクトリ内のコードのファイルも削除したい場合は，以下を実行する．
+
+`$ make clean`
+
+
+
+
 <!--天井のライトを赤外線LEDのパルス出力によるデータ送信で点灯/消灯させている．-->
 
+
+---
 動画
 ---
-実行中の動画 : https://youtu.be/0CczAN3XH4g
+* 照明を点灯/消灯している様子 
+
+    https://youtu.be/0CczAN3XH4g
+
+* `TOGGLE_DATA`のコードを書き換え，テレビのチャンネルを切り替えている様子
+
+    https://youtu.be/sqouvlzmQlE
